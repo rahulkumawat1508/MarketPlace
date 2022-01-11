@@ -1,34 +1,66 @@
-plugins {
-	id 'org.springframework.boot' version '2.1.2.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-	id 'java'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.2.RELEASE")
+        classpath('se.transmode.gradle:gradle-docker:1.2')
+    }
 }
- 
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '1.8'
- 
-repositories {
-	mavenCentral()
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'docker'
+
+description = "gradle-springboot"
+
+jar {
+    baseName = 'gradle-springboot'
+    version =  '1.0'
 }
+
+def javaVersion = JavaVersion.VERSION_1_8
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+repositories {   
+     mavenCentral()
+}
+
 dependencies {
     testImplementation 'junit:junit:4.12'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation group: 'log4j', name: 'log4j', version: '1.2.15'
-	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.7.0'
-    implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
-    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.1.2.RELEASE'
-	testImplementation group: 'org.springframework', name: 'spring-test', version: '4.3.14.RELEASE'
-	testImplementation group: 'org.junit.platform', name: 'junit-platform-surefire-provider', version: '1.1.0'
-    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.1.0'
-	runtimeOnly 'org.postgresql:postgresql'
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-		
-	}
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-parent', version: '2.1.2.RELEASE', ext: 'pom'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:'2.1.2.RELEASE'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-tomcat', version: '2.1.2.RELEASE'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version:'2.1.2.RELEASE'
+    compile group:  'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.1.2.RELEASE'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.23'
+    compile group: 'commons-dbcp', name: 'commons-dbcp', version:'1.4'
+    compile group: 'org.apache.commons', name: 'commons-collections4', version:'4.1'
+    compile group: 'org.springframework.boot', name: 'spring-boot-legacy', version:'1.1.0.RELEASE'
+    compile group: 'org.junit.platform', name: 'junit-platform-surefire-provider', version: '1.1.0'
+    compile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.1.0'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.1.2.RELEASE'
+    compile group: 'org.springframework', name: 'spring-test', version: '4.3.14.RELEASE'
+    compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.7.0'
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
+    compile group: 'log4j', name: 'log4j', version: '1.2.15'
 }
- 
-test {
-	useJUnitPlatform()
+
+task buildDocker (type:Docker, dependsOn: build) {
+	applicationName = jar.baseName
+	dockerfile = file('Dockerfile')
+	doFirst {
+		copy {
+			from jar
+			into stageDir
+		}
+	}
 }
